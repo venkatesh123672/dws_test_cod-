@@ -41,7 +41,7 @@
 
 
 /* ---------------- IC Address ---------------- */
-#define ICM20948_ADDR      0x69  // AD0 = LOW
+#define ICM20948_ADDR     0x6B // AD0 = LOW
 
 /*************Accelerometer Output Registers***********/
 
@@ -307,7 +307,7 @@ void I2C_MasterTx(uint32_t u32Status)
 {
     if(u32Status == 0x08)                       /* START has been transmitted */
     {
-        I2C_SET_DATA(I2C0, g_u8DeviceAddr << 1);    /* Write SLA+W to Register I2CDAT */
+        I2C_SET_DATA(I2C0, g_u8DeviceAddr<<1);    /* Write SLA+W to Register I2CDAT */
         I2C_SET_CONTROL_REG(I2C0, I2C_CTL_SI);
       //  I2C_SET_CONTROL_REG(I2C0, I2C_CTL_SI_AA);
     }
@@ -365,8 +365,12 @@ void SYS_Init(void)
     SYS->GPD_MFPL = SYS_GPD_MFPL_PD0MFP_UART0_RXD |
                     SYS_GPD_MFPL_PD1MFP_UART0_TXD;
 
-    SYS->GPE_MFPH &= ~(SYS_GPE_MFPH_PE12MFP_Msk | SYS_GPE_MFPH_PE13MFP_Msk);
-    SYS->GPE_MFPH |= (SYS_GPE_MFPH_PE12MFP_I2C0_SCL | SYS_GPE_MFPH_PE13MFP_I2C0_SDA);
+//    SYS->GPE_MFPH &= ~(SYS_GPE_MFPH_PE12MFP_Msk | SYS_GPE_MFPH_PE13MFP_Msk);
+//    SYS->GPE_MFPH |= (SYS_GPE_MFPH_PE12MFP_I2C0_SCL | SYS_GPE_MFPH_PE13MFP_I2C0_SDA);
+
+
+    SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD4MFP_Msk | SYS_GPD_MFPL_PD5MFP_Msk);
+    SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD4MFP_I2C0_SDA | SYS_GPD_MFPL_PD5MFP_I2C0_SCL);
 
     /**********************************uart2****************************************/
         SYS->GPC_MFPL &= ~(SYS_GPC_MFPL_PC2MFP_Msk |SYS_GPC_MFPL_PC3MFP_Msk);
@@ -485,7 +489,7 @@ int main()
 
 //    uint8_t who, pwr_before, pwr_after;
 
-    who = ICM_ReadReg(ICM20948_WHO_AM_I,1);
+    who = ICM_ReadReg(0x0f,1);
 
 
 //    uint8_t pwr_before = ICM_ReadReg(ICM20948_PWR_MGMT_1);
@@ -508,7 +512,7 @@ int main()
 	// THIS THE FIRST STEP OTHER WISE CHIP IS NOT WORKING and disiable the tempertaure_sensor and enable the lower power mode
 //	ICM_WriteReg(ICM20948_PWR_MGMT_1, 0x29,1); // wake IMU
 
-	ICM_WriteReg(ICM20948_PWR_MGMT_1, 0x01,1); // wake IMU
+//	ICM_WriteReg(ICM20948_PWR_MGMT_1, 0x01,1); // wake IMU
 //
 
 //	TIMER_Delay(TIMER0,10000);
@@ -548,6 +552,13 @@ int main()
 //    TIMER_Delay(TIMER0,10000);
 
 
+/***accelometr**/
+    ICM_WriteReg(0x10,0x60,1);
+
+    /******geo_scope***/
+    ICM_WriteReg(0x11,0x62,1);
+
+
 	/***************CHIP_WEAKUP_REGISTER*************/
 		// THIS THE FIRST STEP OTHER WISE CHIP IS NOT WORKING
 	//	ICM_WriteReg(ICM20948_PWR_MGMT_1, 0x01); // wake IMU
@@ -565,11 +576,11 @@ int main()
     {
       i2c_acc_lo_meter();
 
-      TIMER_Delay(TIMER0,100000);
+//      TIMER_Delay(TIMER0,100000);
 
-      int_status = ICM_ReadReg(0x19,1);
-
-      UART_Write(UART2,itoa(int_status,buffer1,10) ,sizeof(buffer1));
+//      int_status = ICM_ReadReg(0x19,1);
+//
+//      UART_Write(UART2,itoa(int_status,buffer1,10) ,sizeof(buffer1));
 
       memset(buffer1,0,sizeof(buffer1));
     }
@@ -593,7 +604,11 @@ void i2c_acc_lo_meter()
       /***************ACCLOMETER_REGISTER*************************/
 
 
-          ICM_ReadReg(ICM20948_ACCEL_XOUT_H,12);
+//          ICM_ReadReg(ICM20948_ACCEL_XOUT_H,12);
+
+	         ICM_ReadReg(0x22,12);
+
+
 
 //          ICM_ReadReg(ICM20948_ACCEL_XOUT_L);
 //
@@ -639,23 +654,23 @@ void i2c_acc_lo_meter()
          /****************acc_metro_data***************/
 
 //         UART_Write(UART2," ACC ",strlen(" ACC "));
-//
-//         acc_x_axis=(int16_t)((g_u8MstRxData[0]<<8)|g_u8MstRxData[1]);
-//
-//
-//
-//         UART_Write(UART2,itoa(acc_x_axis,buffer,10) ,strlen(buffer) );
-//         UART_Write(UART2,"  ",strlen("  "));
-//
-//         acc_y_axis=(int16_t)((g_u8MstRxData[2]<<8)|g_u8MstRxData[3]);
-//
-//         UART_Write(UART2,itoa(acc_y_axis,buffer,10) ,strlen(buffer) );
-//         UART_Write(UART2,"  ",strlen("  "));
-//
-//         acc_z_axis=(int16_t)((g_u8MstRxData[4]<<8)|g_u8MstRxData[5]);
-//
-//         UART_Write(UART2,itoa(acc_z_axis,buffer,10) ,strlen(buffer) );
-//         UART_Write(UART2,"  ",strlen("  "));
+
+         acc_x_axis=(int16_t)((g_u8MstRxData[0]<<8)|g_u8MstRxData[1]);
+
+
+
+         UART_Write(UART2,itoa(acc_x_axis,buffer,10) ,strlen(buffer) );
+         UART_Write(UART2,"  ",strlen("  "));
+
+         acc_y_axis=(int16_t)((g_u8MstRxData[2]<<8)|g_u8MstRxData[3]);
+
+         UART_Write(UART2,itoa(acc_y_axis,buffer,10) ,strlen(buffer) );
+         UART_Write(UART2,"  ",strlen("  "));
+
+         acc_z_axis=(int16_t)((g_u8MstRxData[4]<<8)|g_u8MstRxData[5]);
+
+         UART_Write(UART2,itoa(acc_z_axis,buffer,10) ,strlen(buffer) );
+         UART_Write(UART2,"  ",strlen("  "));
 
 
       //   CLK_SysTickDelay(2000000000);
@@ -664,7 +679,7 @@ void i2c_acc_lo_meter()
 //         /****************geo_metro_data***************/
 
          UART_Write(UART2,"\n\r",strlen("\n\r"));
-
+//
          geo_x_axis=(int16_t)((g_u8MstRxData[6]<<8)|g_u8MstRxData[7]);
 
          UART_Write(UART2," GEO ",strlen(" GEO "));
@@ -709,51 +724,51 @@ void i2c_acc_lo_meter()
 
 
 
-           if((calibrtion_counter<=100)&&(caibrtion_value))
-           {
-        	   calibrtion_of_the_geo_scope();
-        	   if(calibrtion_counter==100)
-			   caibrtion_value=0;
-        	   calibrtion_counter++;
-
-           }
-           else
-           {
-        	   UART_Write(UART2,"calibrtio_values_of_geo_meter",strlen("calibrtio_values_of_geo_meter"));
-
-			   geo_x_axis=(int16_t)((g_u8MstRxData[6]<<8)|g_u8MstRxData[7]);
-
-			   UART_Write(UART2," GEO ",strlen(" GEO "));
-
-			//   geo_x_axis_x-=geo_x_axis;
-
-			   geo_x_axis=geo_x_axis_x-geo_x_axis;
-
-			 //  geo_x_axis=geo_x_axis-geo_x_axis_x
-
-			   UART_Write(UART2,itoa(geo_x_axis,buffer,10) ,sizeof(buffer) );
-			   UART_Write(UART2,"  ",strlen("  "));
-
-
-			   geo_y_axis=(int16_t)((g_u8MstRxData[8]<<8)|g_u8MstRxData[9]);
-
-			//   geo_y_axis_y-=geo_y_axis;
-
-			   geo_y_axis=geo_y_axis_y-geo_y_axis;
-
-			   UART_Write(UART2,itoa(geo_y_axis,buffer,10) ,sizeof(buffer) );
-			   UART_Write(UART2,"  ",strlen("  "));
-
-			   geo_z_axis=(int16_t)((g_u8MstRxData[10]<<8)|g_u8MstRxData[11]);
-
-			  // geo_z_axis_z-=geo_z_axis;
-
-			   geo_z_axis=geo_z_axis_z-geo_z_axis;
-
-			   UART_Write(UART2,itoa(geo_z_axis,buffer,10) ,sizeof(buffer) );
-			   UART_Write(UART2,"  ",strlen("  "));
-
-           }
+//           if((calibrtion_counter<=100)&&(caibrtion_value))
+//           {
+//        	   calibrtion_of_the_geo_scope();
+//        	   if(calibrtion_counter==100)
+//			   caibrtion_value=0;
+//        	   calibrtion_counter++;
+//
+//           }
+//           else
+//           {
+//        	   UART_Write(UART2,"calibrtio_values_of_geo_meter",strlen("calibrtio_values_of_geo_meter"));
+//
+//			   geo_x_axis=(int16_t)((g_u8MstRxData[6]<<8)|g_u8MstRxData[7]);
+//
+//			   UART_Write(UART2," GEO ",strlen(" GEO "));
+//
+//			//   geo_x_axis_x-=geo_x_axis;
+//
+//			   geo_x_axis=geo_x_axis_x-geo_x_axis;
+//
+//			 //  geo_x_axis=geo_x_axis-geo_x_axis_x
+//
+//			   UART_Write(UART2,itoa(geo_x_axis,buffer,10) ,sizeof(buffer) );
+//			   UART_Write(UART2,"  ",strlen("  "));
+//
+//
+//			   geo_y_axis=(int16_t)((g_u8MstRxData[8]<<8)|g_u8MstRxData[9]);
+//
+//			//   geo_y_axis_y-=geo_y_axis;
+//
+//			   geo_y_axis=geo_y_axis_y-geo_y_axis;
+//
+//			   UART_Write(UART2,itoa(geo_y_axis,buffer,10) ,sizeof(buffer) );
+//			   UART_Write(UART2,"  ",strlen("  "));
+//
+//			   geo_z_axis=(int16_t)((g_u8MstRxData[10]<<8)|g_u8MstRxData[11]);
+//
+//			  // geo_z_axis_z-=geo_z_axis;
+//
+//			   geo_z_axis=geo_z_axis_z-geo_z_axis;
+//
+//			   UART_Write(UART2,itoa(geo_z_axis,buffer,10) ,sizeof(buffer) );
+//			   UART_Write(UART2,"  ",strlen("  "));
+//
+//           }
 
            memset(g_u8MstRxData,0,50);
 
